@@ -38,6 +38,6 @@
 
 // Helper Marcos
 #define TO_CSTR(id)				[[NSString stringWithFormat:@"%@", id] cStringUsingEncoding:NSUTF8StringEncoding]
-#define DUMP_STACK(msg)			FLogFlow("%s\n%s", msg, TO_CSTR([NSThread callStackSymbols]))
+#define DUMP_STACK(msg)			FLogFlow("[STACK DUMP]%s %s[STACK END]", msg, TO_CSTR([NSThread callStackSymbols]))
 
 #endif

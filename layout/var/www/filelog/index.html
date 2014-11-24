@@ -21,50 +21,86 @@ body {
 	padding: 1%;
 	font-size: 0.8rem;
 	overflow: auto;
+	white-space: pre-wrap;
 	font-family: 'Lucida Console', Monaco, monospace;
+}
+.log_error {
+	color: #CB4042;
+}
+.log_warning {
+	color: #F75C2F;
+}
+.log_info {
+	color: #F6C555;
+}
+.log_debug {
+}
+.log_flow {
+	color: #828282;
+}
+.stackdump {
+	color: #828282;
 }
 </style>
 </head>
 
 <body>
-<div id="wrap">
-	<pre id="console"></pre>
-	<script>
-	if ("WebSocket" in window) {
-		var wsUri = "%%WEBSOCKET_URL%%";		// Replaced by server
-		var flogPath = "%%FILELOG_NAME%%";
+<div id="console"></div>
+<script>
+if ("WebSocket" in window) {
+	var wsUri = "%%WEBSOCKET_URL%%";		// Replaced by server
+	var flogPath = "%%FILELOG_NAME%%";
 
-		var elConsole = document.getElementById('console');
-		var escapeHtml = function (html) {
-			return html.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
-		};
-		var output = function (data) {
-			elConsole.innerHTML += escapeHtml(data);
-			window.scrollTo(0, 9e5);
-		};
-		var outputEx = function (perfix, data, suffix) {
-			elConsole.innerHTML += perfix + escapeHtml(data) + suffix;
-			window.scrollTo(0, 9e5);
-		};
+	var socketData = "";
 
-		websocket = new WebSocket(wsUri);
-		websocket.onopen = function(evt) {
-			outputEx('<span style="color:#F6C555;">', 'Connect '+wsUri+' success! Log File: '+flogPath+'\n', '</span>');
-		};
-		websocket.onclose = function(evt) {
-			outputEx('<span style="color:#F6C555;">', 'Disconnect.\n' ,'</span>');
-		};
-		websocket.onmessage = function(evt) {
-			output(evt.data);
-		};
-		websocket.onerror = function(evt) {
-			outputEx('<span style="color:#CB4042;">[ERROR]</span>', ' '+evt.data, '\n');
-		};
+	var elConsole = document.getElementById('console');
+	var escapeHtml = function (html) {
+		return html.replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;');
+	};
+	var output = function (data) {
+		socketData += escapeHtml(data);
+		elConsole.innerHTML = highlightTags(socketData);
+		window.scrollTo(0, 9e5);
+	};
+	var outputEx = function (perfix, data, suffix) {
+		socketData += perfix + escapeHtml(data) + suffix;
+		elConsole.innerHTML = highlightTags(socketData);
+		window.scrollTo(0, 9e5);
+	};
 
-	} else {
-		alert("Your browser doesn't support WebSocket!");
+	var highlightTags = function (data) {
+		var result = data;
+		// Log Color
+		result = result.replace(/(\[ERROR\])/g, '<span class="log_error">$1</span>');
+		result = result.replace(/(\[WARN\])/g, '<span class="log_warning">$1</span>');
+		result = result.replace(/(\[INFO\])/g, '<span class="log_info">$1</span>');
+		result = result.replace(/(\[DEBUG\])/g, '<span class="log_debug">$1</span>');
+		result = result.replace(/(\[FLOW\])/g, '<span class="log_flow">$1</span>');
+
+		// Stack Block
+		result = result.replace(/\[STACK DUMP\]/g, '<span class="stackdump">');
+		result = result.replace(/\[STACK END\]/g, '</span>');
+
+		return result;
 	}
-	</script>
-</div>
+
+	websocket = new WebSocket(wsUri);
+	websocket.onopen = function(evt) {
+		outputEx('<span class="log_info">', 'Connect '+wsUri+' success! Log File: '+flogPath+'\n', '</span>');
+	};
+	websocket.onclose = function(evt) {
+		outputEx('<span class="log_info">', 'Disconnect.\n' ,'</span>');
+	};
+	websocket.onmessage = function(evt) {
+		output(evt.data);
+	};
+	websocket.onerror = function(evt) {
+		outputEx('<span class="log_error">[ERROR]</span>', ' '+evt.data, '\n');
+	};
+
+} else {
+	alert("Your browser doesn't support WebSocket!");
+}
+</script>
 </body>
 </html>

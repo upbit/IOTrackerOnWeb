@@ -1,15 +1,17 @@
 /**
  *  IO Tracker
 **/
+#import <Foundation/Foundation.h>
+#import "substrate.h"
 
 #import "FLogObjectiveC.h"
 #import "WebSocketServer/WebSocketServer.h"
 
-%group NetHooks
+%group NetIOHooks
 
 %hook NSURLConnection
 + (NSData *)sendSynchronousRequest:(NSURLRequest *)request returningResponse:(NSURLResponse **)response error:(NSError **)error {
-	DUMP_STACK("NSURLConnection sendSynchronousRequest: stack");
+	DUMP_STACK("NSURLConnection sendSynchronousRequest:");
 
 	FLogInfo("NSURLConnection sendSynchronousRequest: %s", TO_CSTR([request URL]));
 #if LOG_LEVEL > LOG_LEVEL_FLOW
@@ -30,18 +32,18 @@
 %end	// end of group NetHooks
 
 
-%group FileHooks
+%group FileIOHooks
 
 %hook NSData
 - (BOOL)writeToFile:(NSString *)path atomically:(BOOL)flag {
-	DUMP_STACK("NSData writeToFile: stack");
+	DUMP_STACK("NSData writeToFile:");
 
 	BOOL origResult = %orig(path, flag);
 	FLogWarn("NSData writeToFile(%s):atomically:", TO_CSTR(path));
 	return origResult;
 }
 - (BOOL)writeToFile:(NSString *)path options:(NSDataWritingOptions)mask error:(NSError **)errorPtr {
-	DUMP_STACK("NSData writeToFile: stack");
+	DUMP_STACK("NSData writeToFile:");
 
 	BOOL origResult = %orig(path, mask, errorPtr);
 	FLogWarn("NSData writeToFile(%s):options:error:", TO_CSTR(path));
@@ -51,14 +53,14 @@
 
 %hook NSFileHandle
 + (id)fileHandleForReadingAtPath:(NSString *)path {
-	DUMP_STACK("NSFileHandle fileHandleForReadingAtPath: stack");
+	DUMP_STACK("NSFileHandle fileHandleForReadingAtPath:");
 	
 	id origResult = %orig(path);
 	FLogWarn("NSFileHandle fileHandleForReadingAtPath(%s):", TO_CSTR(path));
 	return origResult;
 }
 + (id)fileHandleForReadingFromURL:(NSURL *)url error:(NSError **)error {
-	DUMP_STACK("NSFileHandle fileHandleForReadingFromURL: stack");
+	DUMP_STACK("NSFileHandle fileHandleForReadingFromURL:");
 
 	id origResult = %orig(url, error);
 	FLogWarn("NSFileHandle fileHandleForReadingFromURL(%s):", TO_CSTR(url));
@@ -67,7 +69,6 @@
 %end
 
 %end	// end of group FileHooks
-
 
 %group InitWebSocket
 
@@ -99,6 +100,16 @@
 %end	// end of group InitHTTPServer
 
 
+// NSLog to FLogInfo
+MSHook(void, NSLogv, NSString *format, va_list args) {
+	//DUMP_STACK("NSLog()");
+
+	_NSLogv(format, args);
+
+	NSString *logResult = [[NSString alloc] initWithFormat:format arguments:args];
+	FLogInfo("%s", TO_CSTR(logResult));
+}
+
 %ctor {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -113,11 +124,13 @@
 	}
 	[[FLogObjectiveC sharedInstance] initWithFileName:filename path:@"/var/logs/filelog" maxLine:50000];
 
+	// export NSLog to FLogInfo
+	MSHookFunction(NSLogv, MSHake(NSLogv));
+
 
 	// Hooks
-	%init(NetHooks);
-	%init(FileHooks);
-
+	%init(NetIOHooks);			// HTTP/openURL
+	%init(FileIOHooks);			// File/Data
 
 	// WebSocket
 	%init(InitWebSocket);

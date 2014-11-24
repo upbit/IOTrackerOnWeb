@@ -107,14 +107,11 @@
 		if (FD_ISSET(fdMasterPTY, &readSet)) {
 			memset(buf, 0, BUFSIZE);
 			if ((numBytes = read(fdMasterPTY, buf, BUFSIZE-1)) < 1) {
-				// Ok, crap. A read(2) error occured. 
+				// Ok, crap. A read(2) error occured.
 				// Maybe the child process hasn't started yet.
 				// Maybe the child process terminated.
 				// Let's handle this a little gracefully.
-				NSLog(@"WebSocket read error: %d, retry %d/%d", numBytes, ++failCount, MAX_READ_FAILURES);
-				
 				if (failCount >= MAX_READ_FAILURES) {
-					NSLog(@"WebSocket read failed, disconnect.");
 					close([self masterPTY]);
 					[self stop];
 					return;
@@ -123,7 +120,7 @@
 				sleep(1);
 
 			} else {
-				failCount = 0; 
+				failCount = 0;
 
 				// pass the data from the child process to the websocket, where it's passed to the browser.
 				[self sendMessage:[NSString stringWithUTF8String:buf]];
