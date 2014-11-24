@@ -1,0 +1,9 @@
+Package: com.zzz.iotracker
+Name: IOTracker
+Depends: mobilesubstrate
+Version: 0.5
+Architecture: iphoneos-arm
+Description: An HTTP/File I/O tracker tweak for iOS.
+Maintainer: Zhou Hao
+Author: Zhou Hao
+Section: Tweaks

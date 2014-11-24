@@ -1,0 +1,11 @@
+.DS_Store
+
+.theos
+theos/
+obj/
+*.deb
+_/
+
+CocoaHTTPServer/include/
+CocoaHTTPServer/libCocoaHTTPServer.a
+
