@@ -11,7 +11,7 @@
 
 + (WebSocketServer *)sharedInstance;
 - (void)initialize;
-- (BOOL)startServer;
+- (void)startServer;
 - (void)stopServer;
 
 @end

@@ -1,1 +1,3 @@
-{ Filter = { Bundles = ( "com.zzz.RankingLog" ); }; }
+{ Filter = { Bundles = (
+	"com.zzz.RankingLog"
+); }; }

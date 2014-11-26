@@ -25,22 +25,28 @@
 
 		[httpServer setPort:8080];
 		[httpServer setDocumentRoot:@"/var/www/filelog"];
-		
-		NSError *error = nil;
-		if (![httpServer start:&error]) {
-			NSLog(@"WebSocket - Error starting Server: %@", error);
-			return;
-		}
+
+		[self startServer];
 	});
 }
 
-- (BOOL)startServer {
-	NSError *error;
-	BOOL ret = [httpServer start:&error];
-	if (!ret) {
-		NSLog(@"Error start WebSocket server: %@", error);
-	}
-	return ret;
+- (void)startServer {
+	dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
+		NSError *error = nil;
+		int max_retry = 10;
+
+		while (max_retry-- > 0) {
+			// openURL: will cause Code=48 "Address already in use", just sleep and retry
+			BOOL ret = [httpServer start:&error];
+			if (ret) {
+				NSLog(@"WebSocket - Listen on port %d", [httpServer listeningPort]);
+				break;
+			}
+
+			NSLog(@"WebSocket - Error restart server: %@, retry last %d", error, max_retry);
+			sleep(3);
+		}
+	});
 }
 
 - (void)stopServer {

@@ -140,7 +140,7 @@
 	if (self.childPID == 0) {
 		// child process
 		NSString *full_path = [[FLogObjectiveC sharedInstance] fullPath];
-		const char *prog[] = { "/usr/bin/tail", "-n","100", "-f",[full_path cStringUsingEncoding:NSUTF8StringEncoding], NULL };
+		const char *prog[] = { "/usr/bin/tail", "-n","80", "-f",[full_path cStringUsingEncoding:NSUTF8StringEncoding], NULL };
 		const char *envp[] = { NULL };
 
 		// replace current process with command
@@ -150,11 +150,11 @@
 		return;
 	}
 
-	NSLog(@"fork child pid=%d success", (int)self.childPID);
-
 	dispatch_async(dispatch_get_global_queue(0, 0), ^{
 		[self pipeDataToWebsocket];
 	});
+
+	NSLog(@"fork child pid=%d success", (int)self.childPID);
 
 	return;
 }
