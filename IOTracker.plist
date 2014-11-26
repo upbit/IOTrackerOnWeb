@@ -1,3 +1,9 @@
 { Filter = { Bundles = (
+	"com.duokan.reader",
+	"com.lv1.girl",
+	"com.nhnent.SKBPRCS",
+	"com.yodo1.crossyroad",
+	"com.yodo1.cuttherope2",
+	"fox.sc",
 	"com.zzz.RankingLog"
 ); }; }

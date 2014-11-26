@@ -271,18 +271,6 @@ MSHook(CFHTTPMessageRef, CFHTTPMessageCreateRequest, CFAllocatorRef alloc, CFStr
 	return origResult;
 };
 
-MSHook(void, CFHTTPMessageSetBody, CFHTTPMessageRef message, CFDataRef bodyData) {
-	DUMP_STACK("CFHTTPMessageSetBody()");
-
-	FLogWarn("CFHTTPMessageSetBody:");
-#if LOG_LEVEL >= LOG_LEVEL_FLOW
-	NSString *bodyText = [[NSString alloc] initWithData:(NSData *)bodyData encoding:NSUTF8StringEncoding];
-	FLogFlow("body: %s", TO_CSTR(bodyText));
-#endif
-
-	_CFHTTPMessageSetBody(message, bodyData);
-};
-
 /*
 static int (*original_connect)(int sockfd, struct sockaddr * serv_addr, int addrlen);
 static int replaced_connect(int sockfd, struct sockaddr * serv_addr, int addrlen) {
@@ -316,12 +304,14 @@ static int replaced_send(int sockfd, const void *buf, size_t len, int flags) {
 
 	// export NSLog to FLogInfo
 	MSHookFunction(NSLogv, MSHake(NSLogv));
-	MSHookFunction(CFHTTPMessageCreateRequest, MSHake(CFHTTPMessageCreateRequest));
-	MSHookFunction(CFHTTPMessageSetBody, MSHake(CFHTTPMessageSetBody));
 
 	// Hooks
 	%init(NetIOHooks);			// HTTP/openURL
 	%init(FileIOHooks);			// File/Data
+
+	// CFNetwork Hooks
+	MSHookFunction(CFHTTPMessageCreateRequest, MSHake(CFHTTPMessageCreateRequest));
+
 
 	// WebSocket
 	%init(InitWebSocket);
