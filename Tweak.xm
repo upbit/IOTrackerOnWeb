@@ -6,37 +6,24 @@
 #import "substrate.h"
 
 #import "FLogObjectiveC.h"
+#import "NSURLConnectionDelegateProxy.h"
 #import "WebSocketServer/WebSocketServer.h"
+
+#pragma mark - NetIOHooks
 
 %group NetIOHooks
 
 %hook NSURLConnection
 
 - (id)initWithRequest:(NSURLRequest *)request delegate:(id <NSURLConnectionDelegate>)delegate {
-	DUMP_STACK("NSURLConnection initWithRequest:delegate:");
-
-	FLogWarn("NSURLConnection initWithRequest:delegate: %s", TO_CSTR([request URL]));
-#if LOG_LEVEL >= LOG_LEVEL_FLOW
-	FLogFlow("headers:\n%s", TO_CSTR([request allHTTPHeaderFields]));
-	NSString *bodyText = [[NSString alloc] initWithData:[request HTTPBody] encoding:NSUTF8StringEncoding];
-	FLogFlow("body:\n%s", TO_CSTR(bodyText));
-#endif
-
-	id origResult = %orig(request, delegate);
+	NSURLConnectionDelegateProxy *delegateProxy = [[NSURLConnectionDelegateProxy alloc] initWithOriginalDelegate:delegate];
+	id origResult = %orig(request, delegateProxy);
 	return origResult;
 }
 
 - (id)initWithRequest:(NSURLRequest *)request delegate:(id <NSURLConnectionDelegate>)delegate startImmediately:(BOOL)startImmediately {
-	DUMP_STACK("NSURLConnection initWithRequest:delegate:startImmediately:");
-
-	FLogWarn("NSURLConnection initWithRequest:delegate:startImmediately: %s", TO_CSTR([request URL]));
-#if LOG_LEVEL >= LOG_LEVEL_FLOW
-	FLogFlow("headers:\n%s", TO_CSTR([request allHTTPHeaderFields]));
-	NSString *bodyText = [[NSString alloc] initWithData:[request HTTPBody] encoding:NSUTF8StringEncoding];
-	FLogFlow("body:\n%s", TO_CSTR(bodyText));
-#endif
-
-	id origResult = %orig(request, delegate, startImmediately);
+	NSURLConnectionDelegateProxy *delegateProxy = [[NSURLConnectionDelegateProxy alloc] initWithOriginalDelegate:delegate];
+	id origResult = %orig(request, delegateProxy, startImmediately);
 	return origResult;
 }
 
@@ -47,35 +34,34 @@
 #if LOG_LEVEL >= LOG_LEVEL_FLOW
 	FLogFlow("headers:\n%s", TO_CSTR([request allHTTPHeaderFields]));
 	NSString *bodyText = [[NSString alloc] initWithData:[request HTTPBody] encoding:NSUTF8StringEncoding];
-	FLogFlow("body:\n%s", TO_CSTR(bodyText));
+	if (bodyText) {
+		FLogFlow("body:\n%s", TO_CSTR(bodyText));
+	}
 #endif
 
 	NSData *responseData = %orig(request, response, error);
 #if LOG_LEVEL >= LOG_LEVEL_FLOW
 	NSString *payload = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
-	FLogFlow("sendSynchronousRequest response:\n%s", TO_CSTR(payload));
+	if (payload) {
+		FLogFlow("%s response:\n%s", TO_CSTR([request URL]), TO_CSTR(payload));
+	}
 #endif
 	return responseData;
 }
 
 %end
-/*
+
 %hook __NSCFURLSession
 
 - (id)dataTaskWithURL:(NSURL *)url {
-	DUMP_STACK("NSURLSession dataTaskWithURL:");
-
 	FLogWarn("NSURLSession dataTaskWithURL: %s", TO_CSTR(url));
-
 	id origResult = %orig(url);
 	return origResult;
 }
 
 - (id)dataTaskWithURL:(NSURL *)url completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
-	DUMP_STACK("NSURLSession dataTaskWithURL:completionHandler:");
-
 	FLogWarn("NSURLSession dataTaskWithURL:completionHandler: %s", TO_CSTR(url));
-
+/*
 	void (^replace_completionHandler)(NSData *data, NSURLResponse *response, NSError *error) = ^(NSData *data, NSURLResponse *response, NSError *error) {
 		completionHandler(data, response, error);
 
@@ -88,44 +74,26 @@
 		}
 #endif
 	};
-
-	id origResult = %orig(url, replace_completionHandler);
+*/
+	id origResult = %orig(url, completionHandler);
 	return origResult;
 }
 
 - (id)dataTaskWithRequest:(NSURLRequest *)request {
-	DUMP_STACK("NSURLSession dataTaskWithRequest:");
-
 	FLogWarn("NSURLSession dataTaskWithRequest: %s", TO_CSTR(request));
-
 	id origResult = %orig(request);
 	return origResult;
 }
 
 - (id)dataTaskWithRequest:(NSURLRequest *)request completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
-	DUMP_STACK("NSURLSession dataTaskWithRequest:completionHandler:");
-
 	FLogWarn("NSURLSession dataTaskWithRequest:completionHandler: %s", TO_CSTR(request));
-
-	void (^replace_completionHandler)(NSData *data, NSURLResponse *response, NSError *error) = ^(NSData *data, NSURLResponse *response, NSError *error) {
-		completionHandler(data, response, error);
-
-#if LOG_LEVEL >= LOG_LEVEL_FLOW
-		if (!error) {
-			NSString *payload = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-			FLogFlow("NSURLSession dataTaskWithURL:completionHandler: response:\n%s", TO_CSTR(payload));
-		} else {
-			FLogFlow("NSURLSession dataTaskWithURL:completionHandler: error:%s", TO_CSTR(error));
-		}
-#endif
-	};
-
-	id origResult = %orig(request, replace_completionHandler);
+	id origResult = %orig(request, completionHandler);
 	return origResult;
 }
 
 %end
-*/
+
+
 %hook UIWebView
 
 - (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)encodingName baseURL:(NSURL *)baseURL {
@@ -183,6 +151,8 @@
 %end	// end of group NetHooks
 
 
+#pragma mark - FileIOHooks
+
 %group FileIOHooks
 
 %hook NSData
@@ -221,36 +191,7 @@
 
 %end	// end of group FileHooks
 
-%group InitWebSocket
-
-%hook UIApplication
-- (id)init {
-	self = %orig;
-	if (self) {
-		// init server when launched
-		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-			NSLog(@"WebSocket - Server init");
-			[[WebSocketServer sharedInstance] initialize];
-		}];
-		
-
-		// start/stop server for background
-		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-			NSLog(@"WebSocket - Server start");
-			[[WebSocketServer sharedInstance] startServer];
-		}];
-		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-			NSLog(@"WebSocket - Server stop");
-			[[WebSocketServer sharedInstance] stopServer];
-		}];
-	}
-
-	return self;
-}
-%end
-
-%end	// end of group InitHTTPServer
-
+#pragma mark - C/C++ Hooks
 
 // NSLog to FLogInfo
 MSHook(void, NSLogv, NSString *format, va_list args) {
@@ -287,6 +228,40 @@ static int replaced_send(int sockfd, const void *buf, size_t len, int flags) {
 //MSHookFunction((void *)connect, (void *)replaced_connect, (void **) &original_connect);
 //MSHookFunction((void *)send, (void *)replaced_send, (void **) &original_send);
 */
+
+#pragma mark - WebSocket
+
+%group InitWebSocket
+
+%hook UIApplication
+- (id)init {
+	self = %orig;
+	if (self) {
+		// init server when launched
+		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+			NSLog(@"WebSocket - Server init");
+			[[WebSocketServer sharedInstance] initialize];
+		}];
+		
+
+		// start/stop server for background
+		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+			NSLog(@"WebSocket - Server start");
+			[[WebSocketServer sharedInstance] startServer];
+		}];
+		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+			NSLog(@"WebSocket - Server stop");
+			[[WebSocketServer sharedInstance] stopServer];
+		}];
+	}
+
+	return self;
+}
+%end
+
+%end	// end of group InitHTTPServer
+
+#pragma mark - %ctor
 
 %ctor {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
