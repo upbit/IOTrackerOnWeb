@@ -173,6 +173,7 @@
 %end
 
 %hook NSFileHandle
+
 + (id)fileHandleForReadingAtPath:(NSString *)path {
 	DUMP_STACK("NSFileHandle fileHandleForReadingAtPath:");
 	
@@ -187,6 +188,25 @@
 	FLogWarn("NSFileHandle fileHandleForReadingFromURL: %s", TO_CSTR(url));
 	return origResult;
 }
+
+%end
+
+%hook NSFileManager
+
+- (BOOL)fileExistsAtPath:(NSString *)path {
+	FLogWarn("NSFileManager fileExistsAtPath: %s", TO_CSTR(path));
+	return %orig(path);
+}
+- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory {
+	FLogWarn("NSFileManager fileExistsAtPath:isDirectory: %s", TO_CSTR(path));
+	return %orig(path, isDirectory);
+}
+
+- (NSData *)contentsAtPath:(NSString *)path {
+	FLogWarn("NSFileManager contentsAtPath: %s", TO_CSTR(path));
+	return %orig(path);
+}
+
 %end
 
 %end	// end of group FileHooks
