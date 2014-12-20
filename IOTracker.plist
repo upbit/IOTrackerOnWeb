@@ -1,3 +1,4 @@
 { Filter = { Bundles = (
+	"sh.whisper.eryuapp_2",
 	"sh.whisper.eryuapp"
 ); }; }

@@ -1,9 +1,9 @@
 Package: com.zzz.iotracker
-Name: IOTracker
+Name: IOTracker for Whisper
 Depends: mobilesubstrate
-Version: 0.52
+Version: 0.6
 Architecture: iphoneos-arm
-Description: An HTTP/File I/O tracker tweak for iOS.
+Description: An Whisper App Tracker for iOS.
 Maintainer: Zhou Hao
 Author: Zhou Hao
 Section: Tweaks
