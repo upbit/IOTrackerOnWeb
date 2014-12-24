@@ -205,6 +205,29 @@
 -(id)initWithFeed:(id)feed context:(id)context;
 @end
 
+@interface WSecurity : NSObject {
+}
++(unsigned)zerosInString:(id)string;
++(id)hashBaseString:(id)string counter:(unsigned)counter;
++(void)tryHashCash;
++(id)dataFromImageWithWhisperExif:(id)whisperExif;
++(id)base64EncodedString:(id)string;
++(id)sha1Nonce:(id)nonce secret:(id)secret;
++(id)sharedSecretWithPin:(id)pin uid:(id)uid;
++(id)md5Image:(id)image;
++(id)md5String:(id)string;
++(int)hashStringByMD5:(id)a5;
++(unsigned)hostFromUrl:(id)url;
++(void)erasePersistentDataAndImages;
++(id)messagingSocketAuthenticationData;
++(id)whisperSocketAuthenticationData;
++(id)authenticatedHeadersForPin:(id)pin uid:(id)uid;
++(id)authenticatedHeadersForPin:(id)pin;
++(id)authenticatedHeaders;
++(id)unauthenticatedHeadersWithoutUid;
++(id)unauthenticatedHeaders;
+@end
+
 
 #pragma mark - NetIOHooks
 /*
@@ -432,6 +455,83 @@
 	return ret;
 }
 */
+
+%end
+
+%hook WSecurity
+
++(id)dataFromImageWithWhisperExif:(id)whisperExif
+{
+	id ret = %orig(whisperExif);
+	NSLog(@"[WSecurity] dataFromImageWithWhisperExif(%@) = %@", whisperExif, ret);
+	return ret;
+}
++(id)base64EncodedString:(id)string
+{
+	id ret = %orig(string);
+	NSLog(@"[WSecurity] base64EncodedString(%@) = %@", string, ret);
+	return ret;
+}
++(id)sha1Nonce:(id)nonce secret:(id)secret
+{
+	id ret = %orig(nonce, secret);
+	NSLog(@"[WSecurity] sha1Nonce(%@, %@) = %@", nonce, secret, ret);
+	return ret;
+}
++(id)sharedSecretWithPin:(id)pin uid:(id)uid
+{
+	id ret = %orig(pin, uid);
+	NSLog(@"[WSecurity] sharedSecretWithPin(%@, %@) = %@", pin, uid, ret);
+	return ret;
+}
++(id)md5String:(id)string
+{
+	id ret = %orig(string);
+	NSLog(@"[WSecurity] md5String(%@) = %@", string, ret);
+	return ret;
+}
++(id)messagingSocketAuthenticationData
+{
+	id ret = %orig;
+	NSLog(@"[WSecurity] messagingSocketAuthenticationData = %@", ret);
+	return ret;
+}
++(id)whisperSocketAuthenticationData
+{
+	id ret = %orig;
+	NSLog(@"[WSecurity] whisperSocketAuthenticationData = %@", ret);
+	return ret;
+}
++(id)authenticatedHeadersForPin:(id)pin uid:(id)uid
+{
+	id ret = %orig(pin, uid);
+	NSLog(@"[WSecurity] authenticatedHeadersForPin(%@, %@) = %@", pin, uid, ret);
+	return ret;
+}
++(id)authenticatedHeadersForPin:(id)pin
+{
+	id ret = %orig(pin);
+	NSLog(@"[WSecurity] authenticatedHeadersForPin(%@) = %@", pin, ret);
+	return ret;
+}
++(id)authenticatedHeaders
+{
+	id ret = %orig;
+	NSLog(@"[WSecurity] authenticatedHeaders = %@", ret);
+	return ret;
+}
++(id)unauthenticatedHeadersWithoutUid
+{
+	id ret = %orig;
+	NSLog(@"[WSecurity] unauthenticatedHeadersWithoutUid = %@", ret);
+	return ret;
+}
++(id)unauthenticatedHeaders
+{
+	id ret = %orig;
+	NSLog(@"[WSecurity] unauthenticatedHeaders = %@", ret);
+	return ret;
+}
 
 %end
 
