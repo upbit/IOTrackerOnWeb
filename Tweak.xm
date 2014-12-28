@@ -228,6 +228,159 @@
 +(id)unauthenticatedHeaders;
 @end
 
+#pragma mark - MTA
+
+/*
+@interface MTAEnv : NSObject {
+	BOOL _jailbroken;
+	NSString* _platform;
+	NSString* _os_version;
+	NSString* _language;
+	NSString* _resolution;
+	NSString* _deviceid;
+	NSString* _mccmnc;
+	NSString* _timezone;
+	NSString* _app_version;
+	NSString* _sdk_version;
+	NSString* _devicename;
+	NSString* _modulename;
+	NSUUID* _ifa;
+	NSUUID* _ifv;
+	NSString* _wf;
+}
+@property(retain, nonatomic) NSString* wf;
+@property(assign) BOOL jailbroken;
+@property(retain, nonatomic) NSUUID* ifv;
+@property(retain, nonatomic) NSUUID* ifa;
+@property(retain, nonatomic) NSString* modulename;
+@property(retain, nonatomic) NSString* devicename;
+@property(retain, nonatomic) NSString* sdk_version;
+@property(retain, nonatomic) NSString* app_version;
+@property(retain, nonatomic) NSString* timezone;
+@property(retain, nonatomic) NSString* mccmnc;
+@property(retain, nonatomic) NSString* deviceid;
+@property(retain, nonatomic) NSString* resolution;
+@property(retain, nonatomic) NSString* language;
+@property(retain, nonatomic) NSString* os_version;
+@property(retain, nonatomic) NSString* platform;
+-(void)dealloc;
+@end
+
+@interface MTAUser : NSObject {
+	NSString* _uid;
+	int _userType;
+	NSString* _appVer;
+	unsigned _tagTime;
+}
+@property(assign) unsigned tagTime;
+@property(retain, nonatomic) NSString* appVer;
+@property(assign) int userType;
+@property(retain, nonatomic) NSString* uid;
+-(void)dealloc;
+@end
+
+@interface MTAHelper : NSObject {
+	MTAEnv* env;
+	MTAUser* user;
+	BOOL _MTAEnableFlag;
+}
+@property(assign) BOOL MTAEnableFlag;
++(id)getInstance;
++(BOOL)isWiFiAvailable;
++(id)getMacAddress;
++(int)GUnzip:(id)unzip Out:(id*)anOut;
++(int)GZip:(id)zip Out:(id*)anOut;
++(void)ChiperRC4:(id)a4;
+-(id)getJson:(id)json;
+-(void)saveMid:(id)mid;
+-(id)getMid;
+-(BOOL)checkMTAEnable;
+-(id)fetchSSIDInfo;
+-(void)dealloc;
+-(id)init;
+-(id)getUser;
+-(id)getEnv;
+@end
+
+@interface MTADispatcher : NSObject {
+	dispatch_queue_s* task_queue;
+	CFArrayRef streams;
+}
++(id)getInstance;
+-(void)speedTest:(id)test;
+-(id)splitSpeedString:(id)string;
+-(id)taSocket:(id)socket;
+-(id)GetCurTime;
+-(void)send:(id)send callback:(id)callback;
+-(BOOL)nsRequest:(id)request responseData:(id*)data;
+-(void)sendEvent:(id)event callback:(id)callback;
+-(void)close;
+-(id)init;
+@end
+*/
+
+@interface MTAConfig : NSObject {
+	BOOL _debugEnable;
+	BOOL _smartReporting;
+	BOOL _autoExceptionCaught;
+	BOOL _accountType;
+	BOOL _statEnable;
+	unsigned _sessionTimeoutSecs;
+	int _reportStrategy;
+	NSString* _appkey;
+	NSString* _channel;
+	unsigned _maxStoreEventCount;
+	unsigned _maxLoadEventCount;
+	unsigned _minBatchReportCount;
+	unsigned _maxSendRetryCount;
+	unsigned _sendPeriodMinutes;
+	unsigned _maxParallelTimingEvents;
+	unsigned _maxReportEventLength;
+	NSString* _qq;
+	NSString* _account;
+	NSString* _accountExt;
+	NSString* _customerUserID;
+	NSString* _customerAppVersion;
+	NSString* _ifa;
+	NSString* _pushDeviceToken;
+	NSString* _statReportURL;
+	int _maxSessionStatReportCount;
+	NSString* _op;
+	NSString* _cn;
+	NSString* _sp;
+}
+@property(retain, nonatomic) NSString* sp;
+@property(retain, nonatomic) NSString* cn;
+@property(retain, nonatomic) NSString* op;
+@property(assign) int maxSessionStatReportCount;
+@property(retain, nonatomic) NSString* statReportURL;
+@property(retain, nonatomic) NSString* pushDeviceToken;
+@property(retain, nonatomic) NSString* ifa;
+@property(retain, nonatomic) NSString* customerAppVersion;
+@property(retain, nonatomic) NSString* customerUserID;
+@property(assign) BOOL statEnable;
+@property(retain, nonatomic) NSString* accountExt;
+@property(assign) BOOL accountType;
+@property(retain, nonatomic) NSString* account;
+@property(retain, nonatomic) NSString* qq;
+@property(assign) unsigned maxReportEventLength;
+@property(assign) BOOL autoExceptionCaught;
+@property(assign) BOOL smartReporting;
+@property(assign) unsigned maxParallelTimingEvents;
+@property(assign) unsigned sendPeriodMinutes;
+@property(assign) unsigned maxSendRetryCount;
+@property(assign) unsigned minBatchReportCount;
+@property(assign) unsigned maxLoadEventCount;
+@property(assign) unsigned maxStoreEventCount;
+@property(retain, nonatomic) NSString* channel;
+@property(retain, nonatomic) NSString* appkey;
+@property(assign) int reportStrategy;
+@property(assign) unsigned sessionTimeoutSecs;
+@property(assign) BOOL debugEnable;
++(id)getInstance;
+-(id)getCustomProperty:(id)property default:(id)aDefault;
+-(id)init;
+@end
 
 #pragma mark - NetIOHooks
 /*
@@ -533,6 +686,12 @@
 	return ret;
 }
 
+%end
+
+// MTA start
+
+%hook MTAConfig
+- (id)debugEnable {	return (id)YES; }
 %end
 
 %end	// end of group WhisperHooks
